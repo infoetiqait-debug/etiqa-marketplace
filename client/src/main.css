@@ -5,14 +5,14 @@
 :root {
 
     /*-----colors*/
-    --lemon: #d7ef43;
-    --gray: #3b3b3b;
-    --dark-gray: #2b2b2b;
-    --white: #ffffff;
-    --dark-white: #f8f8f8;
-    --black: #000000;
+    --lemon: #38bdf8;
+    --gray: #132a46;
+    --dark-gray: #0a1224;
+    --white: #f8fafc;
+    --dark-white: #cbd5e1;
+    --black: #0b0f1c;
 
-    /*-----border-raduis*/
+    /*-----border-radius*/
     --_5px: 5px;
     --_10px: 10px;
     --_15px: 15px;
@@ -20,9 +20,10 @@
     --_50px: 50px;
 
     /*-----border*/
-    --btn-border: 2px solid var(--lemon);
+    --btn-border: 2px solid rgba(56, 189, 248, 0.18);
 
     /*-----shadow*/
+    --shadow-soft: 0 18px 50px rgba(8, 14, 30, 0.24);
 }
 
 
@@ -79,8 +80,12 @@
 /*-----basic-template*/
 body {
     user-select: none;
+    min-height: 100%;
     background-color: var(--dark-gray);
-    height: 100%;
+    color: var(--white);
+    background-image:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.09), transparent 28%);
 }
 
 .app-container {

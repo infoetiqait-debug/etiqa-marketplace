@@ -20,6 +20,7 @@ const NFTs = ({
   vuierState,
   filterButtonHandel,
   setFilterButtonHandel,
+  searchTerm,
 }) => {
   const [Data, setData] = useState(NfsData);
   const containerRef = useRef(null);
@@ -41,20 +42,36 @@ const NFTs = ({
   });
 
   useEffect(() => {
-    if (NfsData.FilterItems.length === 0) {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    const matchesSearch = (item) => {
+      if (!normalizedSearch) return true;
+      return (
+        item.postTitle.toLowerCase().includes(normalizedSearch) ||
+        item.postdescreption?.toLowerCase().includes(normalizedSearch) ||
+        item.userInfo?.name?.toLowerCase().includes(normalizedSearch) ||
+        item.filter.some((tag) => tag.toLowerCase().includes(normalizedSearch))
+      );
+    };
+
+    const matchesFilters = (item) => {
+      if (NfsData.FilterItems.length === 0) return true;
+      return item.filter.some((tag) => NfsData.FilterItems.includes(tag));
+    };
+
+    const filteredNFTs = NfsData.NFTs.filter(
+      (item) => matchesFilters(item) && matchesSearch(item)
+    );
+
+    if (!normalizedSearch && NfsData.FilterItems.length === 0) {
       setData(NfsData);
     } else {
-      const handleFilterContent = () =>
-        NfsData.NFTs.filter((obj) =>
-          obj.filter.some((item) => NfsData.FilterItems.includes(item))
-        );
-
-      setData((prevData) => ({
-        ...prevData,
-        NFTs: handleFilterContent(),
-      }));
+      setData({
+        ...NfsData,
+        NFTs: filteredNFTs,
+      });
     }
-  }, [NfsData.FilterItems]);
+  }, [NfsData.FilterItems, NfsData.NFTs, searchTerm]);
 
   useEffect(() => {
     const updateComponent = () => {

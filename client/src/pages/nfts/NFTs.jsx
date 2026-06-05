@@ -11,6 +11,7 @@ const NFTs = ({ Data, setData }) => {
     display: "none",
     size: 12,
   });
+  const [searchTerm, setSearchTerm] = useState("");
 
   return (
     <>
@@ -22,6 +23,8 @@ const NFTs = ({ Data, setData }) => {
       <Heder
         filterButtonHandel={filterButtonHandel}
         setFilterButtonHandel={setFilterButtonHandel}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
       />
       <hr className="MarketplaceHR" />
       <Items Data={Data} serVuierState={serVuierState} />
@@ -31,6 +34,7 @@ const NFTs = ({ Data, setData }) => {
         vuierState={vuierState}
         filterButtonHandel={filterButtonHandel}
         setFilterButtonHandel={setFilterButtonHandel}
+        searchTerm={searchTerm}
       />
       <hr className="MarketplaceHRtow p-0 m-0" />
     </>

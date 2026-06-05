@@ -3,7 +3,12 @@ import { useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
 import { VscSettings } from "react-icons/vsc";
 
-const Heder = ({ filterButtonHandel, setFilterButtonHandel }) => {
+const Heder = ({
+  filterButtonHandel,
+  setFilterButtonHandel,
+  searchTerm,
+  setSearchTerm,
+}) => {
   useEffect(() => {
     const $carousel = window.$("#owl-filter");
     $carousel.owlCarousel({
@@ -54,6 +59,8 @@ const Heder = ({ filterButtonHandel, setFilterButtonHandel }) => {
                   type="text"
                   placeholder="Search your favorite NFTs"
                   className="py-3 mx-1 w-100"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 <FiSearch className="FiSearch" />
               </div>

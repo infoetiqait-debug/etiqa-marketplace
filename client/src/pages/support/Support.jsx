@@ -1,19 +1,56 @@
 import "./Support.css";
 import { createRoot } from "react-dom/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { FiSearch } from "react-icons/fi";
-import { PiFlagBannerFoldThin } from "react-icons/pi";
-import { PiMoneyWavyLight } from "react-icons/pi";
-import { PiHandbagLight } from "react-icons/pi";
-import { IoBookOutline } from "react-icons/io5";
-import { IoMegaphoneOutline } from "react-icons/io5";
+import { FiSearch, FiMinus, FiPhoneCall } from "react-icons/fi";
+import { PiFlagBannerFoldThin, PiMoneyWavyLight, PiHandbagLight } from "react-icons/pi";
+import { IoBookOutline, IoMegaphoneOutline } from "react-icons/io5";
 import { FaAngleDown } from "react-icons/fa6";
-import { FiMinus } from "react-icons/fi";
-import { FiPhoneCall } from "react-icons/fi";
 import { CiMail } from "react-icons/ci";
 
+const faqItems = [
+  {
+    title: "What is an NFT?",
+    body: "An NFT, or Non-Fungible Token, is a unique digital asset that represents ownership of a specific item or piece of content on the blockchain.",
+  },
+  {
+    title: "How do I buy an NFT?",
+    body: "To buy an NFT, you typically need a digital wallet that supports cryptocurrencies and NFTs. You will also need to purchase cryptocurrency (like Ethereum) to make the transaction.",
+  },
+  {
+    title: "Can I create my own NFT?",
+    body: "Yes! You can create your own NFT by minting it on a blockchain. Many platforms allow creators to upload their digital art, music, videos, or other types of content and convert them into NFTs.",
+  },
+  {
+    title: "What are gas fees?",
+    body: "Gas fees are transaction fees that are paid to miners on a blockchain network to process and validate transactions.",
+  },
+  {
+    title: "How do I sell my NFT?",
+    body: "To sell your NFT, you can list it on an NFT marketplace. You'll need to connect your digital wallet, select the NFT you want to sell, and set a price.",
+  },
+  {
+    title: "What happens if I lose access to my wallet?",
+    body: "If you lose access to your digital wallet, you may lose access to your NFTs and cryptocurrency.",
+  },
+  {
+    title: "Are NFTs a good investment?",
+    body: "The value of NFTs can be highly speculative and varies greatly based on demand, rarity, and market trends.",
+  },
+];
+
 const Support = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredFaqs = faqItems.filter((item) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      item.title.toLowerCase().includes(query) ||
+      item.body.toLowerCase().includes(query)
+    );
+  });
+
   useEffect(() => {
     const carousel = window.$("#owlSupport");
     carousel.owlCarousel({
@@ -57,7 +94,12 @@ const Support = () => {
               <span>How can we help you?</span>
               <div className="inbutSection d-flex align-items-center p-1 mt-3">
                 <FiSearch className="searchIcon my-1 mx-2" />
-                <input type="text" placeholder="Ask a question..." />
+                <input
+                  type="text"
+                  placeholder="Ask a question..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
                 <span className="py-2 px-3">Search</span>
               </div>
             </div>
@@ -106,124 +148,30 @@ const Support = () => {
           </div>
           <div className="row d-flex justify-content-center my-4">
             <div className="col-11 col-lg-8 questionSection">
-              <div className="faq-container">
-                <div className="faq-item" onClick={HandelIconDropDownMenu}>
-                  <details>
-                    <summary className="d-flex justify-content-between align-items-center">
-                      What is an NFT?
-                      <span className="icon">
-                        <FaAngleDown />
-                      </span>
-                    </summary>
-                    <p>
-                      An NFT, or Non-Fungible Token, is a unique digital asset
-                      that represents ownership of a specific item or piece of
-                      content on the blockchain.
-                    </p>
-                  </details>
+              {filteredFaqs.length ? (
+                filteredFaqs.map((faq, index) => (
+                  <div
+                    key={index}
+                    className={`faq-container${index === 0 ? "" : " mt-2"}`}
+                  >
+                    <div className="faq-item" onClick={HandelIconDropDownMenu}>
+                      <details>
+                        <summary className="d-flex justify-content-between align-items-center">
+                          {faq.title}
+                          <span className="icon">
+                            <FaAngleDown />
+                          </span>
+                        </summary>
+                        <p>{faq.body}</p>
+                      </details>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <span>No FAQs match your search query.</span>
                 </div>
-              </div>
-              <div className="faq-container mt-2">
-                <div className="faq-item" onClick={HandelIconDropDownMenu}>
-                  <details>
-                    <summary className="d-flex justify-content-between align-items-center">
-                      How do I buy an NFT?
-                      <span className="icon">
-                        <FaAngleDown />
-                      </span>
-                    </summary>
-                    <p>
-                      To buy an NFT, you typically need a digital wallet that
-                      supports cryptocurrencies and NFTs. You will also need to
-                      purchase cryptocurrency (like Ethereum) to make the
-                      transaction.
-                    </p>
-                  </details>
-                </div>
-              </div>
-              <div className="faq-container mt-2">
-                <div className="faq-item" onClick={HandelIconDropDownMenu}>
-                  <details>
-                    <summary className="d-flex justify-content-between align-items-center">
-                      Can I create my own NFT?
-                      <span className="icon">
-                        <FaAngleDown />
-                      </span>
-                    </summary>
-                    <p>
-                      es! You can create your own NFT by minting it on a
-                      blockchain. Many platforms allow creators to upload their
-                      digital art, music, videos, or other types of content and
-                      convert them into NFTs.
-                    </p>
-                  </details>
-                </div>
-              </div>
-              <div className="faq-container mt-2">
-                <div className="faq-item" onClick={HandelIconDropDownMenu}>
-                  <details>
-                    <summary className="d-flex justify-content-between align-items-center">
-                      What are gas fees?
-                      <span className="icon">
-                        <FaAngleDown />
-                      </span>
-                    </summary>
-                    <p>
-                      Gas fees are transaction fees that are paid to miners on a
-                      blockchain network to process and validate transactions.
-                    </p>
-                  </details>
-                </div>
-              </div>
-              <div className="faq-container mt-2">
-                <div className="faq-item" onClick={HandelIconDropDownMenu}>
-                  <details>
-                    <summary className="d-flex justify-content-between align-items-center">
-                      How do I sell my NFT?
-                      <span className="icon">
-                        <FaAngleDown />
-                      </span>
-                    </summary>
-                    <p>
-                      To sell your NFT, you can list it on an NFT marketplace.
-                      You'll need to connect your digital wallet, select the NFT
-                      you want to sell, and set a price.
-                    </p>
-                  </details>
-                </div>
-              </div>
-              <div className="faq-container mt-2">
-                <div className="faq-item" onClick={HandelIconDropDownMenu}>
-                  <details>
-                    <summary className="d-flex justify-content-between align-items-center">
-                      What happens if I lose access to my wallet?
-                      <span className="icon">
-                        <FaAngleDown />
-                      </span>
-                    </summary>
-                    <p>
-                      If you lose access to your digital wallet, you may lose
-                      access to your NFTs and cryptocurrency.
-                    </p>
-                  </details>
-                </div>
-              </div>
-              <div className="faq-container mt-2">
-                <div className="faq-item" onClick={HandelIconDropDownMenu}>
-                  <details>
-                    <summary className="d-flex justify-content-between align-items-center">
-                      Are NFTs a good investment?
-                      <span className="icon">
-                        <FaAngleDown />
-                      </span>
-                    </summary>
-                    <p>
-                      The value of NFTs can be highly speculative and varies
-                      greatly based on demand, rarity, and market trends.
-                    </p>
-                  </details>
-                </div>
-              </div>
+              )}
             </div>
           </div>
           <div className="row d-flex justify-content-center pt-4">

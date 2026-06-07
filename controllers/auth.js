@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
+const fetch = require('node-fetch');
 const config = require('../config');
 const mockDataStore = require('../utils/mockData');
 const { asyncHandler, NotFoundError, AuthenticationError } = require('../utils/errors');
@@ -68,6 +69,82 @@ exports.login = asyncHandler(async (req, res) => {
           return;
         }
         // Return token directly (not wrapped in data) for compatibility with frontend
+        res.status(HTTP_STATUS.OK).json({ token });
+        resolve();
+      },
+    );
+  });
+});
+
+exports.googleAuth = asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return sendValidationError(res, errors.array());
+  }
+
+  const { idToken } = req.body;
+  const googleClientId = config.GOOGLE_CLIENT_ID;
+
+  if (!googleClientId) {
+    throw new AuthenticationError('Google client ID is not configured');
+  }
+
+  const googleResponse = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(
+      idToken,
+    )}`,
+  );
+
+  if (!googleResponse.ok) {
+    throw new AuthenticationError(ERROR_MESSAGES.INVALID_GOOGLE_TOKEN);
+  }
+
+  const googleData = await googleResponse.json();
+
+  if (googleData.aud !== googleClientId) {
+    throw new AuthenticationError(ERROR_MESSAGES.INVALID_GOOGLE_TOKEN);
+  }
+
+  if (googleData.email_verified !== 'true' && googleData.email_verified !== true) {
+    throw new AuthenticationError(ERROR_MESSAGES.GOOGLE_EMAIL_NOT_VERIFIED);
+  }
+
+  const email = googleData.email;
+  const name = googleData.name || email.split('@')[0];
+
+  let user = mockDataStore.users.findOne({ email });
+
+  if (!user) {
+    user = mockDataStore.users.create({
+      name,
+      email,
+      password: 'google_auth',
+      chipsAmount: config.INITIAL_CHIPS_AMOUNT,
+      provider: 'google',
+      googleId: googleData.sub,
+    });
+  }
+
+  const payload = {
+    user: {
+      id: user.id,
+    },
+  };
+
+  const tokenExpiry = config.JWT_TOKEN_EXPIRES_IN || '7d';
+  const jwtSecret = config.JWT_SECRET || 'demo-secret-key-change-in-production';
+
+  return new Promise((resolve, reject) => {
+    jwt.sign(
+      payload,
+      jwtSecret,
+      { expiresIn: tokenExpiry },
+      (err, token) => {
+        if (err) {
+          reject(new Error('Failed to generate token'));
+          return;
+        }
         res.status(HTTP_STATUS.OK).json({ token });
         resolve();
       },

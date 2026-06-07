@@ -1,7 +1,7 @@
 import "./SignUp.css";
 import { Helmet } from "react-helmet-async";
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { FiUser } from "react-icons/fi";
 import { FiLock } from "react-icons/fi";
 import { FaGoogle } from "react-icons/fa";
@@ -28,6 +28,15 @@ const SignUp = ({ setData }) => {
   const [messageInbutHandler, setMessageInbutHandler] = useState({
     InbutPasswordNotMatch: "",
   });
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState("");
+  const [googleReady, setGoogleReady] = useState(false);
+  const googleButtonRef = useRef(null);
+  const navigate = useNavigate();
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.MODE === "development" ? "http://localhost:9030" : "");
 
   const [avatar, setAvatar] = useState([
     {
@@ -67,6 +76,158 @@ const SignUp = ({ setData }) => {
       avatarActive: "",
     },
   ]);
+
+  const parseJwt = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2))
+          .join(''),
+      );
+      return JSON.parse(jsonPayload);
+    } catch {
+      return {};
+    }
+  };
+
+  const handleGoogleCredentialResponse = async (response) => {
+    if (!response?.credential) {
+      setGoogleError('Google sign-in failed to return a credential.');
+      return;
+    }
+
+    setGoogleLoading(true);
+    setGoogleError('');
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken: response.credential }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Google signup failed.');
+      }
+
+      const profile = parseJwt(response.credential);
+
+      // Persist the backend JWT for future API requests if needed
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+      }
+
+      setData((prevData) => ({
+        ...prevData,
+        Access: {
+          ...prevData.Access,
+          haveaccess: 'true',
+          accountInfo: {
+            ...prevData.Access.accountInfo,
+            userName: profile.name || profile.email?.split('@')[0] || '',
+            userEmail: profile.email || '',
+            userPassword: '',
+            userAvatar: profile.picture || prevData.Access.accountInfo.userAvatar,
+          },
+        },
+      }));
+
+      navigate('/account');
+    } catch (err) {
+      setGoogleError(err.message || 'Google signup failed.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const initializeGoogleSignIn = () => {
+    if (!googleClientId || !window.google?.accounts?.id) return;
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: handleGoogleCredentialResponse,
+      cancel_on_tap_outside: true,
+    });
+
+    if (googleButtonRef.current && window.google.accounts.id.renderButton) {
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        text: 'signin_with',
+      });
+    }
+
+    setGoogleReady(true);
+    setGoogleLoading(false);
+  };
+
+  const handleGoogleButtonClick = () => {
+    setGoogleError('');
+
+    if (!googleClientId) {
+      setGoogleError('Google Sign-In is not configured. Set VITE_GOOGLE_CLIENT_ID in client/.env and GOOGLE_CLIENT_ID in server config/local.env.');
+      return;
+    }
+
+    if (!window.google?.accounts?.id || !googleReady) {
+      setGoogleError('Google Sign-In is still loading. Please wait a moment.');
+      return;
+    }
+
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        setGoogleError('Google Sign-In could not be displayed. Please try again later.');
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!googleClientId) {
+      setGoogleError('Google Sign-In is not configured. Set VITE_GOOGLE_CLIENT_ID in client/.env and GOOGLE_CLIENT_ID in server config/local.env.');
+      return;
+    }
+
+    if (window.google?.accounts?.id) {
+      initializeGoogleSignIn();
+      return;
+    }
+
+    const existingScript = document.getElementById('google-signin-script');
+    if (existingScript) {
+      if (window.google?.accounts?.id) {
+        initializeGoogleSignIn();
+      }
+      return;
+    }
+
+    setGoogleLoading(true);
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.id = 'google-signin-script';
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogleSignIn;
+    script.onerror = () => {
+      setGoogleLoading(false);
+      setGoogleError('Failed to load Google Sign-In. Please check your connection and try again.');
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      const loadedScript = document.getElementById('google-signin-script');
+      if (loadedScript) {
+        loadedScript.remove();
+      }
+    };
+  }, [googleClientId]);
 
   const HandelInput = (event) => {
     event.preventDefault();
@@ -197,7 +358,11 @@ const SignUp = ({ setData }) => {
                     </div>
                     <div>
                       <div className="d-flex justify-content-center mt-4">
-                        <div className="w-100 sochialButtonComponant py-2 gap-2">
+                        <div
+                          className="w-100 sochialButtonComponant py-2 gap-2"
+                          onClick={handleGoogleButtonClick}
+                          style={{ cursor: googleLoading ? 'not-allowed' : 'pointer' }}
+                        >
                           <FaGoogle className="sochialIcon my-1" />
                           <div className="sochialButtonComponantTitle gap-1">
                             <span className="F4">Signup with</span>
@@ -205,6 +370,19 @@ const SignUp = ({ setData }) => {
                           </div>
                         </div>
                       </div>
+                      <div ref={googleButtonRef} style={{ display: 'none', height: 0, overflow: 'hidden' }} />
+                      {googleError ? (
+                        <div
+                          style={{
+                            color: 'red',
+                            textAlign: 'center',
+                            marginTop: '0.75rem',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          {googleError}
+                        </div>
+                      ) : null}
                       <div className="d-flex justify-content-center mt-3">
                         <div className="w-100 sochialButtonComponant py-2 gap-2">
                           <FaSquareFacebook className="sochialIcon" />

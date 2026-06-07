@@ -122,6 +122,8 @@ const mockDataStore = {
         password: userData.password,
         chipsAmount: userData.chipsAmount || config.INITIAL_CHIPS_AMOUNT,
         type: userData.type || 0,
+        googleId: userData.googleId || null,
+        provider: userData.provider || null,
         created: new Date(),
       };
 

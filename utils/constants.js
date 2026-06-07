@@ -16,6 +16,8 @@ const HTTP_STATUS = {
 const ERROR_MESSAGES = {
   UNAUTHORIZED: 'Unauthorized request',
   INVALID_CREDENTIALS: 'Invalid credentials',
+  INVALID_GOOGLE_TOKEN: 'Invalid Google login token',
+  GOOGLE_EMAIL_NOT_VERIFIED: 'Google account email is not verified',
   USER_NOT_FOUND: 'User not found',
   USER_ALREADY_EXISTS: 'User already exists with this email or name',
   COLLECTION_NOT_FOUND: 'Collection not found',

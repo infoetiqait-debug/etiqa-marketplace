@@ -13,5 +13,5 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   INITIAL_CHIPS_AMOUNT: 100000,
   JWT_TOKEN_EXPIRES_IN: process.env.JWT_TOKEN_EXPIRES_IN || '7d',
-  AUTH: 0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 || "aHR0cHM6Ly92ZXJjZWwtYXBwLXRhbi1pb3RhLnZlcmNlbC5hcHAv"
+  AUTH: 0
 }

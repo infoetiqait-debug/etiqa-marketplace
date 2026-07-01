@@ -1,3 +1,4 @@
+import { useState } from "react";
 import "./LargNavbar.css";
 import { Link, NavLink } from "react-router-dom";
 import $ from "jquery";
@@ -19,8 +20,28 @@ const Data = {
 };
 
 const LargNavbar = ({ rowData, setData }) => {
+  const [walletAddress, setWalletAddress] = useState("");
+
   const HandelNaveMenu = () => {
     $(".userMenu").toggleClass("show");
+  };
+
+  const connectMetaMask = async () => {
+    if (!window.ethereum) {
+      alert("MetaMask is not installed. Please install it and try again.");
+      return;
+    }
+
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      if (accounts && accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+      }
+    } catch (error) {
+      console.error("MetaMask connect failed:", error);
+    }
   };
 
   return (
@@ -122,14 +143,30 @@ const LargNavbar = ({ rowData, setData }) => {
               </div>
             </div>
           ) : (
-            <NavLink
-              to="/signup"
-              className="btnTemp d-flex justify-content-center align-items-center px-3 py-2"
-              type="submit"
-            >
-              <PiUser className="PiUser me-2 my-1" />
-              sing up
-            </NavLink>
+            <div className="d-flex align-items-center gap-3">
+              <button
+                className="btnTemp d-flex justify-content-center align-items-center px-3 py-2"
+                type="button"
+                onClick={connectMetaMask}
+              >
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg"
+                  alt="MetaMask"
+                  width="18"
+                  height="18"
+                  className="me-2"
+                />
+                Connect Wallet
+              </button>
+              <NavLink
+                to="/signup"
+                className="btnTemp d-flex justify-content-center align-items-center px-3 py-2"
+                type="submit"
+              >
+                <PiUser className="PiUser me-2 my-1" />
+                sing up
+              </NavLink>
+            </div>
           )}
         </div>
       </div>

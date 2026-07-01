@@ -3,29 +3,47 @@ const config = require('./config');
 const configureMiddleware = require('./middleware');
 const configureRoutes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
-const socketio = require('socket.io');
+const connectDB = require('./config/db');
 
 /**
  * Initialize Express application
  */
 const app = express();
 
-// Configure middleware (must be before routes)
-configureMiddleware(app);
+const startServer = async () => {
+  let dbConnected = false;
 
-// Set up API routes
-configureRoutes(app);
+  if (config.MONGO_URI) {
+    const db = await connectDB();
+    if (db) dbConnected = true;
+  } else {
+    console.warn('⚠️  MONGO_URI is not configured. Starting in demo mode without a database.');
+  }
 
-// Global error handler (must be last)
-app.use(errorHandler);
+  app.locals.dbConnected = dbConnected;
 
-/**
- * Start HTTP server
- */
-const server = app.listen(config.PORT, () => {
-  console.log(
-    `🚀 Server is running in ${config.NODE_ENV} mode on port ${config.PORT}`
-  );
+  // Configure middleware (must be before routes)
+  configureMiddleware(app);
+
+  // Set up API routes
+  configureRoutes(app);
+
+  // Global error handler (must be last)
+  app.use(errorHandler);
+
+  /**
+   * Start HTTP server
+   */
+  const server = app.listen(config.PORT, () => {
+    console.log(`🚀 Server is running in ${config.NODE_ENV} mode on port ${config.PORT}`);
+  });
+
+  return server;
+};
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
 
 /**

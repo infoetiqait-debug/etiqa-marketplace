@@ -1,8 +1,9 @@
+const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
 const config = require('../config');
-const mockDataStore = require('../utils/mockData');
+const User = require('../models/User');
 const { asyncHandler, NotFoundError, AuthenticationError } = require('../utils/errors');
 const { sendSuccess, sendError, sendValidationError } = require('../utils/response');
 const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../utils/constants');
@@ -13,15 +14,13 @@ const { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../utils/cons
  * @access  Private
  */
 exports.getCurrentUser = asyncHandler(async (req, res) => {
-  const user = mockDataStore.users.findById(req.user.id);
+  const user = await User.findById(req.user.id).select('-password');
   
   if (!user) {
     throw new NotFoundError(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  const userWithoutPassword = mockDataStore.users.getUserWithoutPassword(user);
-  // Return user data directly for compatibility with frontend
-  return res.status(HTTP_STATUS.OK).json(userWithoutPassword);
+  return sendSuccess(res, { user }, SUCCESS_MESSAGES.USER_RETRIEVED);
 });
 
 /**
@@ -38,16 +37,16 @@ exports.login = asyncHandler(async (req, res) => {
 
   const { email, password } = req.body;
 
-  // Find user by email
-  const user = mockDataStore.users.findOne({ email });
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
 
   if (!user) {
     throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS);
   }
 
-  // Demo: accept any password
-  // In production: const isMatch = await bcrypt.compare(password, user.password);
-  // if (!isMatch) throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS);
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new AuthenticationError(ERROR_MESSAGES.INVALID_CREDENTIALS);
+  }
 
   const payload = {
     user: {
@@ -68,9 +67,7 @@ exports.login = asyncHandler(async (req, res) => {
           reject(new Error('Failed to generate token'));
           return;
         }
-        // Return token directly (not wrapped in data) for compatibility with frontend
-        res.status(HTTP_STATUS.OK).json({ token });
-        resolve();
+        return sendSuccess(res, { token }, SUCCESS_MESSAGES.LOGIN_SUCCESS, HTTP_STATUS.OK);
       },
     );
   });
@@ -110,19 +107,23 @@ exports.googleAuth = asyncHandler(async (req, res) => {
     throw new AuthenticationError(ERROR_MESSAGES.GOOGLE_EMAIL_NOT_VERIFIED);
   }
 
-  const email = googleData.email;
+  const email = googleData.email.toLowerCase().trim();
   const name = googleData.name || email.split('@')[0];
 
-  let user = mockDataStore.users.findOne({ email });
+  let user = await User.findOne({ email });
 
   if (!user) {
-    user = mockDataStore.users.create({
+    const randomPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    user = await User.create({
       name,
       email,
-      password: 'google_auth',
+      password: hashedPassword,
       chipsAmount: config.INITIAL_CHIPS_AMOUNT,
       provider: 'google',
       googleId: googleData.sub,
+      avatarUrl: googleData.picture || '',
     });
   }
 
@@ -145,8 +146,7 @@ exports.googleAuth = asyncHandler(async (req, res) => {
           reject(new Error('Failed to generate token'));
           return;
         }
-        res.status(HTTP_STATUS.OK).json({ token });
-        resolve();
+        return sendSuccess(res, { token }, SUCCESS_MESSAGES.LOGIN_SUCCESS, HTTP_STATUS.OK);
       },
     );
   });
